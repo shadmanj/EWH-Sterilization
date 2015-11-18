@@ -43,10 +43,10 @@ void loop(void)
         digitalWrite(LED,digitalRead(LED)^1);
         printTime=millis();
   }
-  float temperature = getTemp();
-  Serial.println(temperature);
+    float temperature = getTemp();
+    Serial.println(temperature);
   
-  delay(100); //just here to slow down the output so it is easier to read
+    delay(800); //just here to slow down the output so it is easier to read
 }
 double avergearray(int* arr, int number){
   int i;
