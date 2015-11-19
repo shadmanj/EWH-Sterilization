@@ -70,11 +70,24 @@ void printToLCD(float pH, float temp){
     char ps[10]; 
     char ts[10];
     
+    //Convert pH and temp to strings
     dtostrf(pH, 4,2,ps);
     dtostrf(temp, 5,2,ts);
     
     mySerial.write(254);
-    mySerial.write(134);
+    mySerial.write(128);
+    mySerial.write("pH:");
+    
+    mySerial.write(254);
+    mySerial.write(192);
+    mySerial.write(B11011111);
+    
+    mySerial.write(254);
+    mySerial.write(193);
+    mySerial.write("C:");
+    
+    mySerial.write(254);
+    mySerial.write(135);
     mySerial.write(ps);
     
     mySerial.write(254);
@@ -87,8 +100,10 @@ void printToLCD(float pH, float temp){
 void printToSerial(float pH, float temp){
     Serial.print("\npH value: ");
     Serial.println(pH,2);
+    
     Serial.print("Temperature:   ");
     Serial.println(temp,2);
+    
     digitalWrite(LED,digitalRead(LED)^1);
 }
 
