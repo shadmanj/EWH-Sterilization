@@ -9,13 +9,14 @@
 
 int pHArray[ArrayLenth];        //Store the average value of the sensor feedback
 int pHArrayIndex=0;  
-int DS18S20_Pin = 2;            //DS18S20 temperature sensor signal pin on digital 2
+int DS18S20_Pin = 4;            //DS18S20 temperature sensor signal pin on digital 4
+
 
 //Temperature chip i/o
-OneWire ds(DS18S20_Pin);        //DS18S20 temperature sensor on digital pin 2
+OneWire ds(DS18S20_Pin);        //DS18S20 temperature sensor on digital pin 4
 
 //LCD Serial i/o
-SoftwareSerial mySerial(3,2)    //Attach RX to digital pin 2
+SoftwareSerial mySerial(3,2);    //Attach RX to digital pin 2
 
 //Code
 void setup(void)
@@ -23,8 +24,10 @@ void setup(void)
   pinMode(LED,OUTPUT);          //
   Serial.begin(9600);
   mySerial.begin(9600);  //Begin LCD serial  
-  Serial.println("pH meter experiment!");    //Test the serial monitor
+  //Serial.println("pH meter experiment!");    //Test the serial monitor
   delay(500);    //Wait for serial to boot
+  mySerial.write("                "); // clear display + legends
+  mySerial.write("                ");
 }
 
 /*--------------------------------------------------------------------*/
@@ -51,8 +54,9 @@ void loop(void)
   //Print the voltage, pH, and temperature values to the serial
   if(millis() - printTime > printInterval)   //Every 800 milliseconds, print a numerical, convert the state of the LED indicator
   {
-    printToSerial(voltage, pHValue, temperature);
+    printToSerial(pHValue, temperature);  
     printToLCD(pHValue, temperature);
+    printTime=millis();
   }
     delay(800); //just here to slow down the output so it is easier to read
 }
@@ -61,30 +65,31 @@ void loop(void)
 
 //Print outputs to LCD
 void printToLCD(float pH, float temp){
-    mySerial.write(254);  //Move pointer to beginning of first line
-    mySerial.write(128);
+    float p = pH;
+    float t = temp;
+    char ps[10]; 
+    char ts[10];
     
-    mySerial.write("                "); // clear display
-    mySerial.write("                ");
+    dtostrf(pH, 4,2,ps);
+    dtostrf(temp, 5,2,ts);
     
-    mySerial.write(254);  //Move pointer to beginning of first line
-    mySerial.write(128);
+    mySerial.write(254);
+    mySerial.write(134);
+    mySerial.write(ps);
     
-    //Print outputs
-    mySerial.write("pH: 2%f", pH);
-    myserial.write("Temp: 2%fC", temp);
+    mySerial.write(254);
+    mySerial.write(198);
+    mySerial.write(ts);
+    delay(1000);
 }
  
 //Print outputs to serial
-void printToSerial(float volts, float pH, float temp){
-    Serial.print("Voltage:");   
-    Serial.print(volts,2);
-    Serial.print("    pH value: ");
+void printToSerial(float pH, float temp){
+    Serial.print("\npH value: ");
     Serial.println(pH,2);
-    Serial.print("Temperature:");
-    Serial.print(temp,2);
+    Serial.print("Temperature:   ");
+    Serial.println(temp,2);
     digitalWrite(LED,digitalRead(LED)^1);
-    printTime=millis();  
 }
 
 //Averages the voltage reading taken from the pH sensor to reduce error
