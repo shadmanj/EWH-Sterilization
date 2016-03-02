@@ -1,15 +1,18 @@
 #include <OneWire.h> 
 #include <SoftwareSerial.h>    //"soft" serial port to prevent display corruption during upload
 #define SensorPin A0           //pH meter Analog output to Arduino Analog Input 0
-#define Offset 3.07            //deviation compensation
+#define Offset 2.67            //deviation compensation
 #define LED 13
 #define samplingInterval 20
 #define printInterval 800
-#define ArrayLenth  40          //times of collection
+#define ArrayLength  40          //times of collection
 
-int pHArray[ArrayLenth];        //Store the average value of the sensor feedback
+int pHArray[ArrayLength];        //Store the average value of the sensor feedback
 int pHArrayIndex=0;  
 int DS18S20_Pin = 4;            //DS18S20 temperature sensor signal pin on digital 4
+int button1 = 7;        //button 1 pin (calibration)
+int button2 = 8;        //button 2 pin (test)
+
 
 
 //Temperature chip i/o
@@ -18,9 +21,17 @@ OneWire ds(DS18S20_Pin);        //DS18S20 temperature sensor on digital pin 4
 //LCD Serial i/o
 SoftwareSerial mySerial(3,2);    //Attach RX to digital pin 2
 
+//-----------------------------------------------------------------------------------------
+
 //Code
 void setup(void)
 {
+  pinMode(button1, INPUT);    //Make button 1 an input
+  digitalWrite(button1, HIGH);
+  
+  pinMode(button2, INPUT);
+  digitalWrite(button2, HIGH);
+  
   pinMode(LED,OUTPUT);          //
   Serial.begin(9600);
   mySerial.begin(9600);  //Begin LCD serial  
@@ -28,12 +39,25 @@ void setup(void)
   delay(500);    //Wait for serial to boot
   mySerial.write("                "); // clear display + legends
   mySerial.write("                ");
+  
+  getTemp();
 }
 
 /*--------------------------------------------------------------------*/
 
 void loop(void)
 {
+  //CALIBRATE
+  if (button1 == 0){
+    clearScreen();
+    
+  }
+  
+  //READ
+  if (button2 == 0){
+    clearScreen();
+  }
+  
   static unsigned long samplingTime = millis();
   static unsigned long printTime = millis();
   static float pHValue,voltage;
@@ -44,8 +68,8 @@ void loop(void)
   if(millis()-samplingTime > samplingInterval)
   {
       pHArray[pHArrayIndex++]=analogRead(SensorPin);
-      if(pHArrayIndex==ArrayLenth)pHArrayIndex=0;
-      voltage = avergearray(pHArray, ArrayLenth)*5.0/1024;    //To filter noise, the average of the array is used
+      if(pHArrayIndex==ArrayLength)pHArrayIndex=0;
+      voltage = avergearray(pHArray, ArrayLength)*5.0/1024;    //To filter noise, the average of the array is used
       pHValue = 3.5*voltage+Offset;   //Convert voltage to pH, and incorporate the offset
       temperature = getTemp();
       samplingTime=millis();
@@ -58,11 +82,21 @@ void loop(void)
     printToLCD(pHValue, temperature);
     printTime=millis();
   }
-    delay(800); //just here to slow down the output so it is easier to read
+    delay(300); //just here to slow down the output so it is easier to read
 }
 
 //----------------- FUNCTIONS --------------------------------
 
+//Clear LCD screen
+void clearScreen(){
+    mySerial.write(254);
+    mySerial.write(128);
+    mySerial.write("                ");
+    
+    mySerial.write(254);
+    mySerial.write(192);
+    mySerial.write("                ");
+}
 //Print outputs to LCD
 void printToLCD(float pH, float temp){
     float p = pH;
@@ -93,7 +127,7 @@ void printToLCD(float pH, float temp){
     mySerial.write(254);
     mySerial.write(198);
     mySerial.write(ts);
-    delay(1000);
+    //delay(500);
 }
  
 //Print outputs to serial
